@@ -33,7 +33,7 @@ analysisRouter.post('/', async (request, response) => {
 
   let repository = await Repository.findOne({ url: body.url });
 
-  if (repository === undefined) {
+  if (repository === null) {
     repository = new Repository({
       url: body.url,
     });
@@ -42,18 +42,17 @@ analysisRouter.post('/', async (request, response) => {
   }
 
   const analysis = new Analysis({
-    repository: repository._id,
+    repository: repository.id,
   });
+
+  const savedAnalysis = await analysis.save();
+
+  repository.analyses = [...repository.analyses, savedAnalysis._id];
+  repository.save();
 
   const params = {
     DelaySeconds: 10,
-    MessageAttributes: {
-      Analysis: {
-        Datatype: 'String',
-        StringValue: analysis._id,
-      },
-    },
-    MessageBody: repository.url,
+    MessageBody: analysis.id,
     QueueUrl: SQS_QUEUE_URL,
   };
 
@@ -62,7 +61,7 @@ analysisRouter.post('/', async (request, response) => {
       logger.error(err);
       return response.status(500).json({ error: err });
     } else {
-      logger.info(data.MessageId);
+      logger.info('Created message in queue:', data.MessageId);
       return response.status(201).json(analysis);
     }
   });

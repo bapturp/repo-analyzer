@@ -9,7 +9,19 @@ async function fetchRepositories() {
   repositories.value = await res.json()
 }
 
+async function sendAnalysis(url) {
+  const options = {
+    method: "POST",
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({url: url})
+    }
+
+  await fetch("http://localhost:3001/api/analysis", options)
+}
+
 fetchRepositories()
+
+
 </script>
 
 <template>
@@ -19,14 +31,19 @@ fetchRepositories()
     <thead>
       <tr>
         <th scope="col">Slug</th>
-        <th scope="col">url</th>
+        <th>README.md</th>
+        <th>Status</th>
+        <th></th><!-- Analyse Button-->
       </tr>
     </thead>
     <tbody>
       <tr v-for="repository in repositories" :key="repository.id">
         <td>{{ repository.full_name }}</td>
-        <td><a :href="repository.html_url">{{ repository.html_url}}</a></td>
-        <td><button class="btn btn-primary">Analyse</button></td>
+        <td></td>
+        <td></td>
+        <td>
+          <button @click="sendAnalysis(repository.url)" class="btn btn-primary">Analyse</button>
+        </td>
       </tr>
     </tbody>
   </table>
